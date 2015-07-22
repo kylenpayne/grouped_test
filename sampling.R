@@ -13,37 +13,88 @@ theta_obs <- 0.01
 
 alpha<-0.05
 
-B <- 2
+  
+# parameters for model
+k <- 100; m <- 20; N <- 5000; theta = 0.021; delta <- theta*N; 
+# for sample
 
-boot_iter <- 1:B
-t_boot <- unlist(lapply(boot_iter, FUN=function(x){
+
+# start off with naive estimator of delta
+
+# delta is predetermined for sample size estimation
+delta_0 <- floor(theta*N)
+
+r <- max(0, m-(N-delta_0)/k):min(m, delta_0)
+
+# calculate the densities
+probs <- dph(r, k, m, N, theta = delta_0/N)
+
+#grab a random sample
+sampler  <- . %>% sample(prob=dph(.,k,m,N,theta)) 
+samps <- sample(r, size=m*k, replace=T, prob=dph(r, k, m, N, theta=delta_0/N))
+
+delta_samps <- numeric(length(samps))
+## maximizer function
+## 
+##
+maxim<-function(r, k, m, N){
+  # check r
   
-  # parameters for model
-  k <- 100; m <- 20; N <- 5000; theta = 0.021; delta <- theta*N; 
-  # for sample
-  r <- max(0, m-(N-delta)/k):min(m, delta)
+  # intialize an empty vector
+  delta <- numeric(N)
   
-  # calculate the densities
-  probs <- dph(r, k, m, N, theta)
-  
-  #grab a random sample
-  sampler  <- . %>% sample(prob=dph(.,k,m,N,theta)) 
-  samps <- sample(r, size=m*k, replace=T, prob=dph(r, k, m, N, theta))
-  
-  # convert to theta hat
-  theta_hat <- function(r,k,m){
-    1-(1-r/m)^(1/k) %>% return
+  # if for a chosen r and 
+  # delta, etc if the delta is 
+  # such that the r is not in the support, 
+  # then set the delta to NA
+  for(d in 1:N){
+    if(min(m, d-1) >= r &
+      max(0, m - (N-(d-1))/k) <= r){
+      delta[d] <- d-1
+      
+    }
+    else{
+      delta[d] <- NA
+    }
   }
   
-  theta_samps <- theta_hat(samps, k, m)
-  return(theta_samps)
+  delta <- delta[-is.na(delta)]
+  # if the parameter
+  # is not in the possible parameter
+  # space, then set the likelihood = 0 
+  l <- numeric(length(delta))
+  for(d in 1:length(delta)){
+    if(is.na(delta[d])){
+      l[d] <- 0
+    }else{
+      l[d] <- dph(r,k,m,N,theta = delta[d]/N)
+    }
+  }
   
-}))
+  mle <- delta[which.max(l)]
+  return(mle)
+}
 
+maxim_fun <- function(samps, k, m, N){
+  
+  uni_samps <- unique(samps)
+  
+  delta_samples <- unlist(
+    lapply(1:length(uni_samps), FUN=function(j){
+      delta <- maxim(uni_samps[j], k, m, N) 
+      return(delta)
+  }))
+  
+  ## ---- map the unique samples
+  delta <- numeric(length(samps))
+  
+  for(s in 1:length(uni_samps)){
+    s.which <- which(samps == uni_samps[s])
+    delta[s.which] <- delta_samples[s]
+  }
+  return(delta)
+}
 
-q_lo <- quantile(t_boot, alpha/(2*B))
-q_up <- quantile(t_boot, (1-alpha/(2*B)))
+delta_samps<-maxim_fun(samps,k,m,N)
 
-# the bootstrap confidence interval
-conf_int <- c(min(0, 2*theta_obs - q_lo), max(1, 2*theta_obs - q_up))
 

@@ -21,8 +21,7 @@ dph <- function(r,k,m,N,theta){
   } 
   # if r is out of support
   if(r > min(m,delta) || r < max(0, m-(N-delta)/k)){
-    stop("The number of deviant pools specified is not in support
-         of probability density function, please see documentation")
+    NA %>% return
   }
   if(is.vector(r) == FALSE){
     q(r,m,k,N, theta) %>% return
@@ -45,32 +44,7 @@ dph <- function(r,k,m,N,theta){
    p %>% unlist %>% return 
 }
 
-m <- 10
-delta <- 5
-N <- 2000
-k <- 20
-
-r <- max(0, m-(N-delta)/k):min(m,delta)
 
 
-# maxmimizer
+## maxmimizer
 
-maxim<-function(r, k, m, N){
-  # check r
-  
-  delta <- r:N
-  l <- numeric(N)
-  for(d in delta){
-    print(d)
-    if(r >= min(m,d) || r <= max(0, m-(N-d)/k)){
-      l[d+1] <- NA
-    }else{
-      l[d+1] <- dph(r,k,m,N,theta = delta/N)
-    }
-  }
-  
-  mle <- delta[which.max(l)]
-  return(l)
-}
-
-maxim(5, k, m, N)

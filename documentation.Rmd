@@ -1,0 +1,12 @@
+Documentation  for the Group Testing Shiny Package
+========================================================
+
+This is the documentation for the Group testing shiny package for 
+sample size / confidence interval estimation.
+
+* For using the pooled hypergeometric distribution, this is required 
+by population sizes that are relatively small,  $ < N_max$, or for populations
+that are specified. 
+* For populations that are relatively large,  $ > N_max$, we use a binomial
+approxiamtion. 
+
