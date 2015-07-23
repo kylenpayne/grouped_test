@@ -22,7 +22,8 @@ shinyUI(fluidPage(
       # ------- checkbox for sample size est, confidence interval est,
       
       selectInput("type_of_app", label="Application Type",
-                  choices= c("Group Size Estimation" = "samp_size_est" ,
+                  choices= c("Group Size Estimation" = "grp_size_est" ,
+                             "Number of Group Size Estimation" = "num_grp_est",
                               "Confidence Interval Estimation" = "confint_est")),
       
       # ------- create a conditional panel
@@ -43,9 +44,8 @@ shinyUI(fluidPage(
         
         numericInput("pop_size", "Population Size:", min=1, max=100000, value=NA),
         numericInput("num_dev_pools", "Number Of Deviant Pools", min=1, max=1000, value=NA),
-        sliderInput("thresh", "Threshold", min=0, max=1, value=1),
-        sliderInput("true_prop", "True Proportion of Deviant Pools", min=0, max=1, value=0.5),
-        sliderInput("pwr", "Desired Power", min=0, max=1, value=0.01),
+        numericInput("thresh", "Threshold", min=0, max=1, value=1),
+        numericInput("true_prop", "True Proportion of Deviant Pools", min=0, max=1, value=0.5),
         selectInput("type_of_ci", "Type of Confidence Interval",
                     choices=c("Clopper-Pearson" = "CP", 
                               "Agresti-Coull" = "AC",
@@ -54,6 +54,34 @@ shinyUI(fluidPage(
                               "Second Order Corrected" = "SOC"))
       ),
       
+      
+      # ------- create a conditional panel
+      conditionalPanel(
+        condition = "input.type_of_app == 'samp_size_est'",
+        
+        # --------- Enter in values for the sample Size Estimation
+        
+        
+        # numericInput("num_seed_pool", "Number of Seed Pools:",min=1, max=1000, value=1),
+        # this is what we are estimating
+        numericInput("num_seed_per_pool", "Number of Seeds per Pool:", min=1, max=10000, value=1),
+        
+        # if population size is NA, then we know that the value wasn't entered
+        # and we know to use the infinite population assumption and the binomial
+        # model. Otherwise, we use the pooled hypergeometric distribution
+        
+        
+        numericInput("pop_size", "Population Size:", min=1, max=100000, value=NA),
+        # numericInput("num_dev_pools", "Number Of Deviant Pools", min=1, max=1000, value=NA),
+        numericInput("thresh", "Threshold", min=0, max=1, value=1),
+        numericInput("true_prop", "True Proportion of Deviant Pools", min=0, max=1, value=0.5),
+        selectInput("type_of_ci", "Type of Confidence Interval",
+                    choices=c("Clopper-Pearson" = "CP", 
+                              "Agresti-Coull" = "AC",
+                              "Blaker" = "Blaker",
+                              "Score" = "Score",
+                              "Second Order Corrected" = "SOC"))
+      ),
      
       
       

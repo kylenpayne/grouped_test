@@ -43,8 +43,3 @@ dph <- function(r,k,m,N,theta){
   }
    p %>% unlist %>% return 
 }
-
-
-
-## maxmimizer
-

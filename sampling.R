@@ -96,5 +96,13 @@ maxim_fun <- function(samps, k, m, N){
 }
 
 delta_samps<-maxim_fun(samps,k,m,N)
+delta_samps <- delta_samps[which(delta_samps < sd(delta_samps))]
+theta_samps <- delta_samps
+
+
+# --- interesting, both the mle and the 
+# --- estimator have a huge bias problem
+
+
 
 
