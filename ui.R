@@ -23,12 +23,11 @@ shinyUI(fluidPage(
       
       selectInput("type_of_app", label="Application Type",
                   choices= c("Group Size Estimation" = "grp_size_est" ,
-                             "Number of Group Size Estimation" = "num_grp_est",
-                              "Confidence Interval Estimation" = "confint_est")),
+                             "Number of Groups Estimation" = "num_grp_est")),
       
       # ------- create a conditional panel
       conditionalPanel(
-        condition = "input.type_of_app == 'samp_size_est'",
+        condition = "input.type_of_app == 'grp_size_est'",
         
         # --------- Enter in values for the sample Size Estimation
         
@@ -57,7 +56,7 @@ shinyUI(fluidPage(
       
       # ------- create a conditional panel
       conditionalPanel(
-        condition = "input.type_of_app == 'samp_size_est'",
+        condition = "input.type_of_app == 'num_grp_est'",
         
         # --------- Enter in values for the sample Size Estimation
         
@@ -117,9 +116,16 @@ shinyUI(fluidPage(
     # this is where the results will display for each select of the options in the sidebar :)  
     
     mainPanel(
-      h1("Shiny app"),
-      
-      textOutput("text1")
+      conditionalPanel(
+        condition = "input.type_of_app == 'grp_size_est'",
+        textOutput("text1"),
+        plotOutput("plot1")
+      ), 
+      conditionalPanel(
+        condition = "input.type_of_app == 'num_grp_est'",
+        textOutput("text2"),
+        plotOutput("plot2")
+      )
     )
     
   )
