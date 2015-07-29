@@ -11,7 +11,7 @@ library(magrittr)
 # ----------- Pooled hypergeometric distribution
 dph <- function(r,k,m,N,theta){
   
-  delta <- theta*N
+  delta <- floor(theta*N)
   
   q <-  function(r, m,k,N,theta){    
     # assign all of the scalar values to fit into the dhyper function  

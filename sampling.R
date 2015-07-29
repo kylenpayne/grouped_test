@@ -103,6 +103,44 @@ theta_samps <- delta_samps
 # --- interesting, both the mle and the 
 # --- estimator have a huge bias problem
 
+reject_samp <- function(r, k, m, N, shape1, shape2, C){
+  ## rejection sampling 
+  sim_beta <- C*rbeta(1, shape1=shape1, shape2=shape2)
+  f <- dph(r,k,m,N,theta=sim_beta)*dbeta(sim_beta, shape1, shape2)
+  U <- runif(1)
+  
+  alph <- f/(C*dbeta(sim_beta, shape1, shape2))
+  if(alph >= U){
+    return(sim_beta)
+  }
+  else{
+    return(NA)
+  }
+}
+#### --- 
+# Determine the reject rate for levels of the constant
+#
+##
+reject_rate <- numeric(length(seq(0.01, 1, by=0.01)))
+for(C in seq(.01, 1, by=0.01)){
+  reps <- unlist(
+    replicate(10000, expr=reject_samp(r, k, m, N, shape1=0.5, shape2=0.5, C=C)))
+    reject_rate[C*100] <- mean(is.na(reps))
+}
+C <- seq(.01, 1, by=.01)
+reject <- data.frame(C, reject_rate)
+library(ggplot2)
+ggplot(aes(x=C, y = reject_rate), data=reject) + geom_point() + geom_line()
 
 
+# this appears to indicate that c=0.01 may be the best for reducing the rejection rate
 
+
+reps <- unlist(
+  replicate(100000, expr=reject_samp(r, k, m, N, shape1=2, shape2=2, C=0.01)))
+
+reps_comp <- reps[-which(is.na(reps))]
+hist(reps_comp, breaks=1000)
+
+
+mean(reps_comp > 0.001)
