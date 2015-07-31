@@ -22,11 +22,25 @@ reject_samp <- function(r, k, m, N, shape1, shape2, C){
 }
 
 
-post_samp <- function(r, m, N, theta_0, beta, thresh){
- shape_1 <- (theta_0/(1-theta_0))*beta
+
+
+
+post_samp <- function(r, m, N, theta_0, beta, thresh, num_iter){
  
- effect <- thresh - theta_0
- print(effect)
+  #### -----
+  ## This part is or parallelization of the sampling of the posterior 
+  #create cluster
+  library(parallel)
+  cl <- makeCluster(detectCores()-1)  
+  clusterEvalQ(cl, library(magrittr))
+  #put objects in place that might be needed for the code
+  effect <- thresh - theta_0
+  
+
+  
+  
+
+  
  # --- start of algorithm
  
  # setting the bounds on k
@@ -36,49 +50,49 @@ post_samp <- function(r, m, N, theta_0, beta, thresh){
     k_max <- (N-N*theta_0)/(m-r)
   }
  
-  # k <- 1:k_max
-  k <- 1:20
-  p <- lapply(k, FUN=function(size){
-   print(size)
-   samps <- replicate(1,expr=reject_samp(r,k=size, m , N, shape1= 2, shape2=2, C = 0.01))
+ 
+ # set shape1 s.t. the prior mode is equal to theta_0
+ 
+ shape_1 <- (1 + theta_0*beta - 2*theta_0)/(1-theta_0)
+ 
+ k <- 4:k_max
+  # k <- 1:20
+  
+ clusterExport(cl,c("reject_samp", "dph", "r", "m", "N", "theta_0",
+                  "beta", "thresh", "effect", "workerfun"))
+ p <- lapply(k, FUN=function(size){
+  rs <- function(size){
+    print("this is the rs function")
+     s <- reject_samp(r,k=size,m,N, 
+                      shape1=2, shape2=beta, C = 0.01)  
+     return(s)
+  }
+   # parSapply performs parallelized sampling od
+   # the posterior distribution specified using
+   # the reject_samp function
+   samps <- parSapply(cl,1:num_iter, rs)
    rr <- mean(is.na(samps))
    samps<- samps[-which(is.na(samps))]
    print(samps)
    p <- mean((samps <= effect)) 
    return(p)
-  })
+ })
+ 
  p <- unlist(p)
  k_maxi <- k[which.max(p)]
  p_max <- max(p)
- print(p)
  samps <- reject_samp(r, k_maxi, m, N, shape1=2, shape2=2, C = 0.01)
  samps <- samps[-which(is.na(samps))]
  rr <- mean(is.na(samps))
- return(p)
- #return(list('max seed lot size' = k_maxi, 'power' = p_max, 'samples' = samps,
- #             'reject rate' = rr))
+ return(list('max seed lot size' = k_maxi, 'power' = p_max, 'samples' = samps,
+              'reject rate' = rr))
 
+ stopCluster(cl)
 }
-
 
 ## testing the rejection sampling and sample size estimator
-r <- 2; m<-10; N <- 2000; theta_0 <- 0.01; beta<-10000; thresh <- 0.05
+r <- 2; m<-10; N <- 2000; theta_0 <- 0.001; beta<-2; thresh <- 0.005
 
-res <- post_samp(r, m, N, theta_0, beta, thresh)
-
-
-## test
-
-beta<- 1
-theta_0 <- 0.01
-alph <- (theta_0/(1-theta_0))*beta
-eps <- .95
-delt <- 1
-crit <- abs(alph/beta - 1) > eps
-while(crit){
-  beta <- beta + delt
-  alph <- (theta_0/(1-theta_0))*beta
-  crit <- abs(alph/beta - 1) > eps
-}
+res <- post_samp(r, m, N, theta_0, beta=2, thresh, num_iter=1000)
 
 
